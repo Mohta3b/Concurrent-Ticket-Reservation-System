@@ -4,8 +4,10 @@ import (
 	"crypto/rand"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 	"strconv"
+	"strings"
 )
 
 func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets int) (*Event, error) {
@@ -18,8 +20,12 @@ func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets i
 		AvailableTickets: totalTickets,
 	}
 
-	// Save the event
+	// CHECKME: IS it correct?
+	go func() {
 	ts.events.Store(event.ID, event)
+	}()
+
+	fmt.Println("event created", event.ID)
 
 	return event, nil
 }
@@ -36,21 +42,20 @@ func generateUUID() string {
 }
 
 func (ts *TicketService) BookTickets(eventID string, numTickets int) ([]string, error) {
-	// implement concurrency control here
-	// ...
+	ts.mutex.Lock()
+    defer ts.mutex.Unlock()
 
 	event, ok := ts.events.Load(eventID)
+	
 	if !ok {
 		return nil, fmt.Errorf("event not found")
 	}
 
-	// check if there are enough tickets available
 	ev := event.(*Event)
 	if ev.AvailableTickets < numTickets {
 		return nil, fmt.Errorf("not enough tickets available")
 	}
 
-	// create tickets
 	var ticketIDs []string
 	for i := 0; i < numTickets; i++ {
 		ticket := &Ticket{
@@ -61,7 +66,6 @@ func (ts *TicketService) BookTickets(eventID string, numTickets int) ([]string, 
 		ticketIDs = append(ticketIDs, ticket.ID)
 	}
 
-	// update available tickets
 	ev.AvailableTickets -= numTickets
 	ts.events.Store(eventID, ev)
 
@@ -79,8 +83,8 @@ func (ts *TicketService) ListEvents() []*Event {
 }
 
 func (ts *TicketService) getListEventsHandler(w http.ResponseWriter, r *http.Request) {
-	// return json response like {"events": [{"id": "1", "name": "event1", "date": "2021-01-01", "total_tickets": 100, "available_tickets": 100}]}
 	events := ts.ListEvents()
+
 	fmt.Fprintf(w, "{\"events\": [")
 	for i, event := range events {
 		fmt.Fprintf(w, "{\"id\": \"%s\", \"name\": \"%s\", \"date\": \"%s\", \"total_tickets\": %d, \"available_tickets\": %d}", event.ID, event.Name, event.Date.Format("2006-01-02"), event.TotalTickets, event.AvailableTickets)
@@ -96,22 +100,23 @@ func getHomePageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ts *TicketService) reserveTicketsHandler(w http.ResponseWriter, r *http.Request) {
-	// get eventID and num_tickets from request
-	// reserve tickets
-	// return json response
-	eventID := r.URL.Path[len("/events/"):]
+
+	parsedURL, err := url.Parse(r.URL.String())
+	pathParts := strings.Split(parsedURL.Path, "/")
+	eventID := pathParts[2]
 	numTickets, err := strconv.Atoi(r.URL.Query().Get("num_tickets"))
-	// convert string num_tickets to int
+
 	if err != nil {
 		fmt.Fprintf(w, "Error: %v\n", err)
 		return
 	}
+
 	ticketIDs, err := ts.BookTickets(eventID, numTickets)
 	if err != nil {
 		fmt.Fprintf(w, "Error: %v\n", err)
 		return
 	}
-	// return json response like: {"tickets": {"event_id": "1", "ticket_ids": ["1", "2", "3"]}}
+
 	fmt.Fprintf(w, "{\"tickets\": {\"event_id\": \"%s\", \"ticket_ids\": [", eventID)
 	for i, ticketID := range ticketIDs {
 		fmt.Fprintf(w, "\"%s\"", ticketID)
@@ -120,4 +125,25 @@ func (ts *TicketService) reserveTicketsHandler(w http.ResponseWriter, r *http.Re
 		}
 	}
 	fmt.Fprintf(w, "]}}")
+}
+
+func (ts *TicketService) createEventHandler(w http.ResponseWriter, r *http.Request) {
+
+	name := r.URL.Query().Get("name")
+	date, err := time.Parse("2006-01-02", r.URL.Query().Get("date"))
+	if err != nil {
+		fmt.Fprintf(w, "Error: %v\n", err)
+		return
+	}
+	totalTickets, err := strconv.Atoi(r.URL.Query().Get("total_tickets"))
+	if err != nil {
+		fmt.Fprintf(w, "Error: %v\n", err)
+		return
+	}
+	event, err := ts.CreateEvent(name, date, totalTickets)
+	if err != nil {
+		fmt.Fprintf(w, "Error: %v\n", err)
+		return
+	}
+	fmt.Fprintf(w, "{\"event\": {\"id\": \"%s\", \"name\": \"%s\", \"date\": \"%s\", \"total_tickets\": %d, \"available_tickets\": %d}}", event.ID, event.Name, event.Date.Format("2006-01-02"), event.TotalTickets, event.AvailableTickets)
 }
