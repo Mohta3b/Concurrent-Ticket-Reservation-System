@@ -71,7 +71,7 @@ func BookTicketsHandler(w http.ResponseWriter, r *http.Request, ts *TicketServic
 	numTickets, err := strconv.Atoi(numTicketsStr)
 
 	if event.AvailableTickets < numTickets{
-		http.Error(w, fmt.Sprintf("Not enough tickets available"), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Not enough tickets available (available: %v, requested: %v)", event.AvailableTickets, numTickets), http.StatusBadRequest)
 		log.Println("Not enough tickets available")
 		return
 	}
@@ -200,8 +200,6 @@ func saveNewEvent(event *Event.Event) {
 func createServerLogFile() {
 	// create server_log.txt file in ./data directory
 	logFile, err := os.Create("./data/server_log.txt")
-	fmt.Println()
-	fmt.Println(os.Getwd())
 	if err != nil {
 		log.Fatal(err)
 	}

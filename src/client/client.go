@@ -125,7 +125,7 @@ func (c *Client) BookTicketsHandler(args []string) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Println("Unexpected status code:", resp.StatusCode)
+		log.Println(string(body))
 		return
 	}
 
