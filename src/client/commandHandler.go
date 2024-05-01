@@ -2,18 +2,19 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"strings"
-	"encoding/json"
 )
 
 func HelpHandler() {
 	log.Println("Available commands:")
-	log.Println("getEvents - Get a list of all events")
-	log.Println("bookEvents [eventID] [number of tickets] - Book tickets for an event")
-	log.Println("exit - Exit the program")
+	log.Println("create [event name] [event date] [total tickets]")
+	log.Println("get")
+	log.Println("book [eventID] [number of tickets]")
+	log.Println("exit")
 }
 
 func ExitHandler() {
@@ -46,6 +47,21 @@ func PrintBookTickets(body []byte) {
 	}
 }
 
+func PrintCreateEvent(body []byte) {
+	var event map[string]interface{}
+	err := json.Unmarshal(body, &event)
+	if err != nil {
+		log.Println("Error unmarshalling response: " + err.Error())
+		return
+	}
+	fmt.Println("Event created successfully")
+	fmt.Println("ID:", event["ID"])
+	fmt.Println("Name:", event["Name"])
+	fmt.Println("Date:", event["Date"])
+	fmt.Println("Total Tickets:", event["TotalTickets"])
+	fmt.Println("Available Tickets:", event["AvailableTickets"])
+}
+
 func GetInput(Client *Client) {
 	scanner := bufio.NewScanner(os.Stdin)
 	log.Println("Please enter a command or type 'help' to view available commands: ")
@@ -58,10 +74,12 @@ func GetInput(Client *Client) {
 		}
 
 		switch command {
-		case "getEvents":
+		case "get":
 			Client.GetEventsHandler(args)
-		case "bookEvents":
+		case "book":
 			Client.BookTicketsHandler(args)
+		case "create":
+			Client.CreateEventHandler(args)
 		case "help":
 			HelpHandler()
 		case "exit":

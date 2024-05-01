@@ -37,14 +37,6 @@ func NewClient(eventURL, reserveURL string) *Client {
 	}
 }
 
-func StartClient() {
-	log.Println("Client is running")
-	// eventURL := "http://localhost:8080/events"
-	// reserveURL := "http://localhost:8080/events/"
-	// client := NewClient(eventURL, reserveURL)
-	// GetInput(client)
-}
-
 func (c *Client) GetEventsHandler(args []string) {
 	if len(args) != 0 {
 		log.Println("Invalid argument for getEvents command")
@@ -115,4 +107,51 @@ func (c *Client) BookTicketsHandler(args []string) {
 	}
 
 	PrintBookTickets(body)
+}
+
+func (c *Client) CreateEventHandler(args []string) {
+	if len(args) != 3 {
+		log.Println("Invalid arguments for createEvent command")
+		return
+	}
+
+	createEventBody, err := json.Marshal(map[string]interface{}{
+		"name":          args[0],
+		"date":          args[1],
+		"total_tickets": args[2],
+	})
+
+	if err != nil {
+		log.Println("Error marshalling JSON:", err)
+		return
+	}
+	url := fmt.Sprintf("%screate", c.reserveURL)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(createEventBody))
+
+	if err != nil {
+		log.Println("Error creating request:", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		log.Println("Error sending request:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Error reading response:", err)
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Println("Unexpected status code:", resp.StatusCode)
+		return
+	}
+
+	PrintCreateEvent(body)
 }
