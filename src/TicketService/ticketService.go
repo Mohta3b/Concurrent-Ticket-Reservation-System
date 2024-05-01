@@ -16,7 +16,7 @@ import (
 type TicketService struct {
 	events  sync.Map
 	tickets sync.Map
-	mutex   sync.Mutex
+	mutex   sync.RWMutex
 }
 
 func generateUUID() string {
@@ -31,7 +31,6 @@ func generateUUID() string {
 }
 
 func (ts *TicketService) LoadEvents() error {
-	// Lock mutex to ensure thread safety
 	ts.mutex.Lock()
 	defer ts.mutex.Unlock()
 
@@ -48,7 +47,6 @@ func (ts *TicketService) LoadEvents() error {
 		return fmt.Errorf("error decoding events file: %v", err)
 	}
 
-	// Load events into the service
 	for _, event := range events {
 		ts.events.Store(event.ID, event)
 	}
@@ -57,11 +55,9 @@ func (ts *TicketService) LoadEvents() error {
 }
 
 func (ts *TicketService) LoadTickets() error {
-	// Lock mutex to ensure thread safety
 	ts.mutex.Lock()
 	defer ts.mutex.Unlock()
 
-	// Load tickets from tickets.json file
 	ticketsFilePath := "./data/tickets.json"
 	ticketsFile, err := os.Open(ticketsFilePath)
 	if err != nil {
@@ -69,14 +65,12 @@ func (ts *TicketService) LoadTickets() error {
 	}
 	defer ticketsFile.Close()
 
-	// Decode JSON from file
 	var tickets []*Ticket.Ticket
 	err = json.NewDecoder(ticketsFile).Decode(&tickets)
 	if err != nil {
 		return fmt.Errorf("error decoding tickets file: %v", err)
 	}
 
-	// Load tickets into the service
 	for _, ticket := range tickets {
 		ts.tickets.Store(ticket.ID, ticket)
 	}
@@ -85,7 +79,8 @@ func (ts *TicketService) LoadTickets() error {
 }
 
 func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets int) (*Event.Event, error) {
-	// Create a new event
+	ts.mutex.Lock()
+	defer ts.mutex.Unlock()
 	event := &Event.Event{
 		ID:               generateUUID(),
 		Name:             name,
@@ -101,6 +96,8 @@ func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets i
 }
 
 func (ts *TicketService) ListEvents() []*Event.Event {
+	ts.mutex.RLock()
+	defer ts.mutex.RUnlock()
 	var events []*Event.Event
 	ts.events.Range(func(key, value interface{}) bool {
 		event, ok := value.(*Event.Event)
