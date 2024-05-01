@@ -54,18 +54,18 @@ func PrintBookTickets(body []byte) {
 }
 
 func PrintCreateEvent(body []byte) {
-	var event map[string]interface{}
-	err := json.Unmarshal(body, &event)
+	var response Response
+	err := json.Unmarshal(body, &response)
 	if err != nil {
 		log.Println("Error unmarshalling response: " + err.Error())
 		return
 	}
 	fmt.Println("Event created successfully")
-	fmt.Println("ID:", event["ID"])
-	fmt.Println("Name:", event["Name"])
-	fmt.Println("Date:", event["Date"])
-	fmt.Println("Total Tickets:", event["TotalTickets"])
-	fmt.Println("Available Tickets:", event["AvailableTickets"])
+	fmt.Println("ID:", response.ID)
+	fmt.Println("Name:", response.Name)
+	fmt.Println("Date:", response.Date)
+	fmt.Println("Total Tickets:", response.TotalTickets)
+	fmt.Println("Available Tickets:", response.AvailableTickets)
 }
 
 func ConnectToServer(Client *Client) error {

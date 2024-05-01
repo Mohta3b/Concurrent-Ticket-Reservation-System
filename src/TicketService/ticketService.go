@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+
 	// "log"
 	"os"
 	"sync"
@@ -94,27 +95,7 @@ func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets i
 	}
 
 	// CHECKME: IS it correct?
-	ts.events.Store(event.ID, event.ID)
-	ts.events.Store(event.Name, event.Name)
-	ts.events.Store(event.Date, event.Date)
-	ts.events.Store(event.TotalTickets, event.TotalTickets)
-	ts.events.Store(event.AvailableTickets, event.AvailableTickets)
-
-	// append it to the events file
-	eventsFilePath := "./data/events.json"
-	eventsFile, err := os.OpenFile(eventsFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("error opening events file: %v", err)
-	}
-	defer eventsFile.Close()
-
-	// Encode the event and write it to the file
-	err = json.NewEncoder(eventsFile).Encode(event)
-	if err != nil {
-		return nil, fmt.Errorf("error encoding event: %v", err)
-	}
-
-	fmt.Println("event created", event.ID)
+	ts.events.Store(event.ID, event)
 
 	return event, nil
 }
@@ -160,4 +141,12 @@ func (ts *TicketService) BookTickets(eventID string, numTickets int) ([]string, 
 	ts.events.Store(eventID, ev)
 
 	return ticketIDs, nil
+}
+
+func (ts *TicketService) GetEvent(eventID string) *Event.Event {
+	event, ok := ts.events.Load(eventID)
+	if !ok {
+		return nil
+	}
+	return event.(*Event.Event)
 }

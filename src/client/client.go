@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type Client struct {
@@ -18,20 +19,12 @@ type Client struct {
 	reserveURL string
 }
 
-type Event struct {
+type Response struct {
 	ID               string `json:"id"`
 	Name             string `json:"name"`
 	Date             string `json:"date"`
-	TotalTickets     int    `json:"total_tickets"`
-	AvailableTickets int    `json:"available_tickets"`
-}
-
-type Response struct {
-	ID string `json:"id"`
-	Name string `json:"name"`
-	Date string `json:"date"`
-	TotalTickets int `json:"total_tickets"`
-	AvailableTickets int `json:"available_tickets"`
+	TotalTickets     int    `json:"totalTickets"`
+	AvailableTickets int    `json:"availableTickets"`
 }
 
 func NewClient(homeURL, eventURL, reserveURL string) *Client {
@@ -63,7 +56,6 @@ func (c *Client) GetHomePageHandler() int {
 
 	return resp.StatusCode
 }
-
 
 // type Response []Event // response
 
@@ -97,7 +89,6 @@ func (c *Client) GetEventsHandler(args []string) {
 		log.Printf("Unexpected status code: %d\n", resp.StatusCode)
 	}
 
-	
 	PrintListOfEvents(response)
 }
 
@@ -144,6 +135,12 @@ func (c *Client) BookTicketsHandler(args []string) {
 func (c *Client) CreateEventHandler(args []string) {
 	if len(args) != 3 {
 		log.Println("Invalid arguments for createEvent command")
+		return
+	}
+
+	_, err := time.Parse("2006-01-02", args[1])
+	if err != nil {
+		log.Println("Error parsing date:", err)
 		return
 	}
 

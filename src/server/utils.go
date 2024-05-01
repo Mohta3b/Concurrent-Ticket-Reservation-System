@@ -3,19 +3,20 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
+	"ticket_reservation/src/Event"
 	"ticket_reservation/src/TicketService"
 	"time"
 )
 
 func GetHomePageHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("USER: GET /")
-	
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Welcome to the ticket reservation system\n"))
 }
@@ -24,7 +25,7 @@ func GetListEventsHandler(w http.ResponseWriter, r *http.Request, ts *TicketServ
 	// define response body
 	log.Println("USER: GET /events")
 	events := ts.ListEvents()
-	
+
 	// save events in json response w.Write it
 	response, err := json.Marshal(events)
 	if err != nil {
@@ -43,7 +44,7 @@ func GetListEventsHandler(w http.ResponseWriter, r *http.Request, ts *TicketServ
 }
 
 func BookTicketsHandler(w http.ResponseWriter, r *http.Request, ts *TicketService.TicketService) {
-	
+
 	parsedURL, err := url.Parse(r.URL.String())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error parsing URL: %v", err), http.StatusBadRequest)
@@ -59,8 +60,22 @@ func BookTicketsHandler(w http.ResponseWriter, r *http.Request, ts *TicketServic
 	}
 	eventID := pathParts[2]
 
+	event := ts.GetEvent(eventID)
+	if event == nil {
+		http.Error(w, fmt.Sprintf("Event not found: %v", eventID), http.StatusNotFound)
+		log.Println("Event not found: %v", eventID)
+		return
+	}
+
 	numTicketsStr := r.URL.Query().Get("num_tickets")
 	numTickets, err := strconv.Atoi(numTicketsStr)
+
+	if event.AvailableTickets < numTickets{
+		http.Error(w, fmt.Sprintf("Not enough tickets available"), http.StatusBadRequest)
+		log.Println("Not enough tickets available")
+		return
+	}
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error parsing num_tickets: %v", err), http.StatusBadRequest)
 		log.Println("Error parsing num_tickets: %v", err)
@@ -145,13 +160,48 @@ func CreateEventHandler(w http.ResponseWriter, r *http.Request, ts *TicketServic
 	}
 
 	log.Printf("Created event %s with %d tickets", event.ID, event.TotalTickets)
+	saveNewEvent(event)
 }
 
+func saveNewEvent(event *Event.Event) {
+	// open events.json file
+	file, err := os.OpenFile("./data/events.json", os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		log.Println("Error opening events file: %v", err)
+		return
+	}
+	defer file.Close()
+
+	// decode json from file
+	var events []*Event.Event
+	err = json.NewDecoder(file).Decode(&events)
+	if err != nil {
+		log.Println("Error decoding events file: %v", err)
+		return
+	}
+
+	// append new event to events slice
+	events = append(events, event)
+
+	// write events slice to file
+	file.Seek(0, 0)
+	err = file.Truncate(0)
+	if err != nil {
+		log.Println("Error truncating file: %v", err)
+		return
+	}
+	err = json.NewEncoder(file).Encode(events)
+	if err != nil {
+		log.Println("Error encoding events: %v", err)
+		return
+	}
+}
 
 func createServerLogFile() {
 	// create server_log.txt file in ./data directory
 	logFile, err := os.Create("./data/server_log.txt")
-
+	fmt.Println()
+	fmt.Println(os.Getwd())
 	if err != nil {
 		log.Fatal(err)
 	}
