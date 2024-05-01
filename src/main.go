@@ -1,7 +1,7 @@
 package main
 
 import (
-	server "ticket_reservation/server"
+	server "ticket_reservation/src/server"
 )
 
 func main() {
