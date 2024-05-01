@@ -1,20 +1,8 @@
-2024/05/02 00:45:45 !!! Server Log !!!
-2024/05/02 00:45:45 Data loaded.
-2024/05/02 00:45:45 Server is running on port :5050
-2024/05/02 00:45:51 USER: GET /
-2024/05/02 00:45:53 USER: GET /
-2024/05/02 00:46:19 USER: POST /events
-Created event 37cf6b18-8790-4475-ad7c-b227e524f46e with 50 tickets
-2024/05/02 00:46:19 Created event 37cf6b18-8790-4475-ad7c-b227e524f46e with 50 tickets
-2024/05/02 00:46:19 Error decoding events file: %v invalid character '<' looking for beginning of value
-2024/05/02 00:46:32 USER: GET /events/37cf6b18-8790-4475-ad7c-b227e524f46e/tickets?num_tickets=40
-2024/05/02 00:46:32 Booked [cdad202a-cca5-453a-8dcc-5fb2711d99fb 2bbae947-31b1-44af-ab54-8cec335dfbeb a0570ce2-8d7d-47e1-bbe2-72d137da5bda 4ee3783f-1195-4c64-b07b-17571f817649 da788fda-4597-480f-a894-a93e662dddcf 97c0cc1a-6339-4944-80a4-d5c40179ea9c c3194079-7409-4d57-837b-baae3cd195f5 0853571e-96ed-48d6-a397-a781d46c9c84 73382838-6d70-4e31-8b2b-93190abb4055 e3cc9774-f325-42b3-90df-82d75b032736 54b30f1f-a72f-4727-bf19-8666a3be3988 614d65a3-ce5f-4dc0-aabf-05ce776821e5 a766475e-50fb-4198-9758-09164aee0fcb 1c8e5293-6c43-4aa8-881f-b918c59ae950 f413e585-05bd-4cac-84d4-6df569afdefe ab8d330a-de68-4a14-bde0-5491e006bd6e ee5323c8-dd03-4535-ba00-8b75f5a31261 b0d08b30-f463-466e-86f3-ba97b46a3e8d 6537f9c3-212e-45ab-ac81-4264a7834c38 a522b56b-16e9-4bf8-948f-e2bee89e4bc5 f54f2b7f-fbe8-47aa-9677-cac82fea7fa0 7b2bb6ab-74dd-4698-a781-275fa5f4b60a 1524345b-270d-434a-9a11-b4caf036cffe c879dcdf-c53a-49fc-8959-d754d7591280 fb330af4-a377-4895-8b62-707e12b413a9 974c0a1b-f5df-4615-9a22-3937d2c0be0c 02830c2c-79fd-435c-9def-ae91e890fc4f 6f3cd9aa-3c98-4f71-bee6-0b5d81b2ea8c f99e8945-659d-4d1f-a63d-ad4b5911a38a 9e985f4e-7e82-4c7f-8f09-e743419fd8b3 df05b4e9-57e8-4e2c-996a-6d8344b536cf 42891d18-b605-4031-9190-af8368680e95 6f33a6a6-6ec6-4546-b79d-d3d2fc4b2aa3 8c5d46d8-3b50-48c2-ad6d-042eee290439 bd17a675-ba0c-4224-b1be-4671340ae689 acf89739-ce24-4e98-948a-b6d45d258131 4f53b62e-7382-4bfd-a8bc-76f19d07e31b 07a6648e-b2ec-4bb7-8981-4d34e9ebabff 753ab5ee-f924-436b-b990-ec88fbd6a5b2 4fdfb60f-88cc-428e-b2eb-612c036b492b] tickets for event 37cf6b18-8790-4475-ad7c-b227e524f46e
-2024/05/02 00:46:45 USER: GET /
-2024/05/02 00:46:49 USER: GET /
-2024/05/02 00:47:04 USER: POST /events
-Created event 8ea96082-cdae-4715-af22-c0e36b8bb312 with 10 tickets
-2024/05/02 00:47:04 Created event 8ea96082-cdae-4715-af22-c0e36b8bb312 with 10 tickets
-2024/05/02 00:47:04 Error decoding events file: %v invalid character '<' looking for beginning of value
-2024/05/02 00:47:06 USER: GET /events
-2024/05/02 00:47:26 Not enough tickets available
-2024/05/02 00:47:53 Event not found: %v 1
+2024/05/02 01:32:38 !!! Server Log !!!
+2024/05/02 01:32:38 Data loaded.
+2024/05/02 01:32:38 Server is running on port :5050
+2024/05/02 01:32:44 USER: GET /
+2024/05/02 01:32:50 USER: POST /events
+Created event 51a1784d-9709-4974-87f1-cebba5071341 with 100 tickets
+2024/05/02 01:32:50 Created event 51a1784d-9709-4974-87f1-cebba5071341 with 100 tickets
+2024/05/02 01:32:50 Error decoding events file: %v invalid character '<' looking for beginning of value

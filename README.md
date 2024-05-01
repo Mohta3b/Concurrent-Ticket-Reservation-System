@@ -560,6 +560,20 @@ func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets i
 	return event, nil
 }
 ```
+## Set Limitation On Concurrent Requests
+In order to limit the number of concurrent requests, we can use a buffered channel to control the number of goroutines that can run concurrently. We can create a buffered channel with a specific capacity and use it to control the number of goroutines that can run concurrently. When a new request comes in, we can send a value to the channel to reserve a slot for the new goroutine. When the goroutine finishes processing the request, it can send a value back to the channel to free up the slot for another goroutine. This way, we can limit the number of concurrent requests to the capacity of the channel.
+
+```go
+func Run(port string) {
+	const maxClients = 10
+	sema := make(chan struct{}, maxClients)
+	http.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
+		sema <- struct{}{}
+		defer func() { <-sema }()
+		GetListEventsHandler(w, r, &ts)
+	})
+}	
+```
 
 ## Fairness and Starvation Prevention
 
@@ -686,6 +700,7 @@ Same as the reading and writing processes, sync.Maps checks `read` at first and 
 ### Create Event
 
 ![createevents](assets/CreateEvents.png "csreateevents")
+
 ![createeventserror1](assets/CreateEventsError1.png "createeventserror1")
 
 ### Get Events
@@ -695,4 +710,16 @@ Same as the reading and writing processes, sync.Maps checks `read` at first and 
 ### Book Event
 
 ![bookevents](assets/BookEvents.png "bookevent")
+
 ![bookeventserror1](assets/BookEventsError1.png "bookeventerror1")
+
+# Group Members & Contribution
+- [Nesa Abbasi](https://github.com/Nesabbasi)
+  - Implementing the server & client side of the project
+  - Participating in writing code documentation
+- [Ava Mirmohammadmahdi](https://github.com/avamirm)
+  - Modify the server & client side of the project
+  - Participating in writing code documentation
+- [Amir Ali Vahidi](https://github.com/Mohta3b)
+  - Handling the project structure
+  - Implementing the server & client side of the project
