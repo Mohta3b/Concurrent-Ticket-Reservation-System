@@ -1,18 +1,21 @@
 package TicketService
 
 import (
+	"crypto/rand"
+	"encoding/json"
+	"fmt"
+	// "log"
+	"os"
+	"sync"
 	"ticket_reservation/src/Event"
 	"ticket_reservation/src/Ticket"
-	"sync"
-	"fmt"
-	"crypto/rand"
 	"time"
 )
 
 type TicketService struct {
-	events sync.Map
+	events  sync.Map
 	tickets sync.Map
-	mutex sync.Mutex
+	mutex   sync.Mutex
 }
 
 func generateUUID() string {
@@ -26,20 +29,90 @@ func generateUUID() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
 }
 
+func (ts *TicketService) LoadEvents() error {
+	// Lock mutex to ensure thread safety
+	ts.mutex.Lock()
+	defer ts.mutex.Unlock()
+
+	eventsFilePath := "./data/events.json"
+	eventsFile, err := os.Open(eventsFilePath)
+	if err != nil {
+		return fmt.Errorf("error opening events file: %v", err)
+	}
+	defer eventsFile.Close()
+
+	var events []*Event.Event
+	err = json.NewDecoder(eventsFile).Decode(&events)
+	if err != nil {
+		return fmt.Errorf("error decoding events file: %v", err)
+	}
+
+	// Load events into the service
+	for _, event := range events {
+		ts.events.Store(event.ID, event)
+	}
+
+	return nil
+}
+
+func (ts *TicketService) LoadTickets() error {
+	// Lock mutex to ensure thread safety
+	ts.mutex.Lock()
+	defer ts.mutex.Unlock()
+
+	// Load tickets from tickets.json file
+	ticketsFilePath := "./data/tickets.json"
+	ticketsFile, err := os.Open(ticketsFilePath)
+	if err != nil {
+		return fmt.Errorf("error opening tickets file: %v", err)
+	}
+	defer ticketsFile.Close()
+
+	// Decode JSON from file
+	var tickets []*Ticket.Ticket
+	err = json.NewDecoder(ticketsFile).Decode(&tickets)
+	if err != nil {
+		return fmt.Errorf("error decoding tickets file: %v", err)
+	}
+
+	// Load tickets into the service
+	for _, ticket := range tickets {
+		ts.tickets.Store(ticket.ID, ticket)
+	}
+
+	return nil
+}
+
 func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets int) (*Event.Event, error) {
 	// Create a new event
 	event := &Event.Event{
 		ID:               generateUUID(),
 		Name:             name,
-		Date:             date,
+		Date:             date.Format("2006-01-02"),
 		TotalTickets:     totalTickets,
 		AvailableTickets: totalTickets,
 	}
 
 	// CHECKME: IS it correct?
-	go func() {
-	ts.events.Store(event.ID, event)
-	}()
+	ts.events.Store(event.ID, event.ID)
+	ts.events.Store(event.Name, event.Name)
+	ts.events.Store(event.Date, event.Date)
+	ts.events.Store(event.TotalTickets, event.TotalTickets)
+	ts.events.Store(event.AvailableTickets, event.AvailableTickets)
+
+	// append it to the events file
+	eventsFilePath := "./data/events.json"
+	eventsFile, err := os.OpenFile(eventsFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("error opening events file: %v", err)
+	}
+	defer eventsFile.Close()
+
+	// Encode the event and write it to the file
+	err = json.NewEncoder(eventsFile).Encode(event)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding event: %v", err)
+	}
 
 	fmt.Println("event created", event.ID)
 
@@ -49,8 +122,10 @@ func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets i
 func (ts *TicketService) ListEvents() []*Event.Event {
 	var events []*Event.Event
 	ts.events.Range(func(key, value interface{}) bool {
-		event := value.(*Event.Event)
-		events = append(events, event)
+		event, ok := value.(*Event.Event)
+		if ok {
+			events = append(events, event)
+		}
 		return true
 	})
 	return events
@@ -58,17 +133,17 @@ func (ts *TicketService) ListEvents() []*Event.Event {
 
 func (ts *TicketService) BookTickets(eventID string, numTickets int) ([]string, error) {
 	ts.mutex.Lock()
-    defer ts.mutex.Unlock()
+	defer ts.mutex.Unlock()
 
 	event, ok := ts.events.Load(eventID)
-	
+
 	if !ok {
 		return nil, fmt.Errorf("event ID %s not found", eventID)
 	}
 
 	ev := event.(*Event.Event)
 	if ev.AvailableTickets < numTickets {
-		return nil, fmt.Errorf("not enough tickets available for event %s", eventID)
+		return nil, fmt.Errorf("not enough tickets available for event %s -> %s (availableTickets: %d , requestedTickets: %d)", eventID, ev.Name, ev.AvailableTickets, numTickets)
 	}
 
 	var ticketIDs []string

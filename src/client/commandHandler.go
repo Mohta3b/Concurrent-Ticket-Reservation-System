@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -22,15 +23,20 @@ func ExitHandler() {
 	os.Exit(0)
 }
 
-func PrintListOfEvents(response Response) {
-	for _, event := range response.Events {
-		fmt.Println("Event ID:", event.ID)
-		fmt.Println("Event Name:", event.Name)
-		fmt.Println("Event Date:", event.Date)
+func PrintListOfEvents(response []Response) {
+	if len(response) == 0 {
+		fmt.Println("No events found")
+		return
+	}
+	fmt.Println("Events:")
+	for _, event := range response {
+		fmt.Println("ID:", event.ID)
+		fmt.Println("Name:", event.Name)
+		fmt.Println("Date:", event.Date)
 		fmt.Println("Total Tickets:", event.TotalTickets)
 		fmt.Println("Available Tickets:", event.AvailableTickets)
 		fmt.Println()
-	}
+	}	
 }
 
 func PrintBookTickets(body []byte) {
@@ -60,6 +66,17 @@ func PrintCreateEvent(body []byte) {
 	fmt.Println("Date:", event["Date"])
 	fmt.Println("Total Tickets:", event["TotalTickets"])
 	fmt.Println("Available Tickets:", event["AvailableTickets"])
+}
+
+func ConnectToServer(Client *Client) error {
+	// call homePageHandler and if it was successful, call GetInput
+	statusCode := Client.GetHomePageHandler()
+	if statusCode != http.StatusOK {
+		log.Println("Error connecting to server. Exiting...")
+		return fmt.Errorf("error connecting to server")
+	}
+	GetInput(Client)
+	return nil
 }
 
 func GetInput(Client *Client) {

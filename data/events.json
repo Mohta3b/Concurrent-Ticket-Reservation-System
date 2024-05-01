@@ -1,29 +1,23 @@
 [
     {
-        "event1": {
-            "id": "1",
-            "name": "Event 1",
-            "date": "2021-03-01",
-            "total_tickets": 10,
-            "available_tickets": 5
-        }
+        "id": "1",
+        "name": "Event 1",
+        "date": "2021-03-01",
+        "totalTickets": 10,
+        "availableTickets": 5
     },
     {
-        "event2": {
-            "id": "2",
-            "name": "Event 2",
-            "date": "2021-03-02",
-            "total_tickets": 200,
-            "available_tickets": 200
-        }
+        "id": "2",
+        "name": "Event 2",
+        "date": "2021-03-02",
+        "totalTickets": 200,
+        "availableTickets": 200
     },
     {
-        "event3": {
-            "id": "3",
-            "name": "Event 3",
-            "date": "2021-03-03",
-            "total_tickets": 3,
-            "available_tickets": 0
-        }
+        "id": "3",
+        "name": "Event 3",
+        "date": "2021-03-03",
+        "totalTickets": 3,
+        "availableTickets": 0
     }
-]
+]{"id":"bb7f9af4-07d1-45b6-ac22-ecffdf8dfcf2","name":"eventman","date":"2025-01-01","totalTickets":100,"availableTickets":100}

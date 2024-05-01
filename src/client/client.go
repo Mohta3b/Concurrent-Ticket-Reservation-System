@@ -13,6 +13,7 @@ import (
 
 type Client struct {
 	httpClient *http.Client
+	homeURL    string
 	eventURL   string
 	reserveURL string
 }
@@ -26,16 +27,45 @@ type Event struct {
 }
 
 type Response struct {
-	Events []*Event `json:"events"`
+	ID string `json:"id"`
+	Name string `json:"name"`
+	Date string `json:"date"`
+	TotalTickets int `json:"total_tickets"`
+	AvailableTickets int `json:"available_tickets"`
 }
 
-func NewClient(eventURL, reserveURL string) *Client {
+func NewClient(homeURL, eventURL, reserveURL string) *Client {
 	return &Client{
 		httpClient: &http.Client{},
+		homeURL:    homeURL,
 		eventURL:   eventURL,
 		reserveURL: reserveURL,
 	}
 }
+
+// return status code
+func (c *Client) GetHomePageHandler() int {
+	resp, err := c.httpClient.Get(c.homeURL)
+	if err != nil {
+		log.Println("Error getting homepage:", err)
+		return http.StatusInternalServerError
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Println("Unexpected status code:", resp.StatusCode)
+		return resp.StatusCode
+	}
+
+	// print response body. it is []byte format. convert to string
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
+	return resp.StatusCode
+}
+
+
+// type Response []Event // response
 
 func (c *Client) GetEventsHandler(args []string) {
 	if len(args) != 0 {
@@ -56,16 +86,18 @@ func (c *Client) GetEventsHandler(args []string) {
 		return
 	}
 
-	var response Response
-	if err := json.Unmarshal(responseData, &response); err != nil {
-		log.Println("Error decoding JSON:", err)
+	var response []Response
+	err = json.Unmarshal(responseData, &response)
+	if err != nil {
+		log.Println("Error unmarshalling response:", err)
 		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Println("Status code %d is unexpected", resp.StatusCode)
+		log.Printf("Unexpected status code: %d\n", resp.StatusCode)
 	}
 
+	
 	PrintListOfEvents(response)
 }
 
