@@ -12,12 +12,19 @@ This is a simple ticket reservation system implemented using Go that allows mult
   - [Event](#event)
   - [Ticket](#ticket)
   - [TicketService](#ticketService)
+- [Contributors](#contributors)
+- [Results](#results)
+  - [Help](#help)
+  - [Get Events](#get-events)
+  - [Create Event](#create-event)
+  - [Book Event](#book-event)
 
 ## Structure and Implementation
 
 The system is divided into two main components: the client and the server. The client is responsible for sending requests to the server, while the server is responsible for processing these requests and managing the ticket reservation system.
 
 We used the `"net/http"` library for handling http requests and responses. The `net/http` package in Go utilizes goroutines and concurrency to handle HTTP requests efficiently and asynchronously. It is designed around a concurrency model where each incoming HTTP request is handled by its own goroutine. This means that when a client sends an HTTP request to a server, the server creates a new goroutine to handle that request. This allows the server to continue accepting and processing new incoming requests concurrently without blocking. Each goroutine handles one request at a time, allowing the server to handle multiple requests simultaneously.
+
 ## Client
 
 ### Client
@@ -31,15 +38,17 @@ type Client struct {
 	reserveURL string
 }
 ```
+
 **`Response`:** We define a Response struct containing a slice of pointers to Event structs.
 We specify the JSON tag json:"events" for the Events field to define its name in JSON encoding and decoding. We demonstrate how to unmarshal JSON data representing a response into a Response struct and access the list of events contained in the response.
- ```go
- type Response struct {
+
+```go
+type Response struct {
 	Events []*Event `json:"events"`
 }
- ```
+```
 
- This part has the following methods:
+This part has the following methods:
 `NewClinet()`: This part of the function initializes and configures a new instance of the Client struct. It creates an http.Client instance (httpClient) and configures its properties, such as Timeout and Transport. In Go's net/http package, you can control the number of concurrent requests by setting the MaxIdleConns and MaxIdleConnsPerHost fields of the http.Transport struct. These fields define the maximum number of idle (keep-alive) connections that can be maintained per host and in total. This is like a semaphore that is used to control access to a shared resource with limited capacity.  
 `Timeout`: Sets the maximum amount of time the client waits for a response from the server. In this case, it's set to 10 seconds.  
 `Transport`: Configures the HTTP transport settings. It includes properties like `MaxIdleConns` and `MaxIdleConnsPerHost`, which define the maximum number of idle connections that can be maintained.
@@ -59,6 +68,7 @@ func NewClient(eventURL, reserveURL string) *Client {
 	}
 }
 ```
+
 `GetEventsHandler()` This function handles the logic for retrieving events from a server using an HTTP GET request and processing the response. It takes a single argument args, which is a slice of strings representing command-line arguments. In this case, the function expects no arguments (len(args) == 0). The function sends an HTTP GET request to the eventURL specified in the Client struct. It reads the response body and decodes the JSON data into a Response struct. If the response status code is not http.StatusOK (200), it logs an error message. Otherwise, it prints the list of events contained in the response. The PrintListOfEvents function is a helper function that prints the event details in a formatted way.
 
 ```go
@@ -155,6 +165,7 @@ func (c *Client) BookTicketsHandler(args []string) {
 ```
 
 **`CreateEventHandler()`:** It first checks if the length of the args slice is not equal to 3. If it's not, it logs an error message indicating that the arguments are invalid for the createEvent command and returns. It then creates the request and sets the headers. It uses `httpClient.Do(req)` to execute the request and obtain a response. It reads the response body using `ioutil.ReadAll(resp.Body)`. If there's an error reading the response body, it logs the error and returns.
+
 ```go
 func (c *Client) CreateEventHandler(args []string) {
 	if len(args) != 3 {
@@ -551,16 +562,19 @@ func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets i
 ```
 
 ## Fairness and Starvation Prevention
-### Scheduling
- The below code helps us to explain how golang implements fairness in threads. It uses an M:N mapping. This means M goroutines need to be mapped to N threads. So, users can create however many goroutines they want, but it schedules their goroutines on a thread for a certain period of time.
 
- Golang has a global FIFO named `globalRunQueue`; Each thread picks a goroutine from this queue to execute it. But this is not enough since more than one thread can take a goroutine from `globalRunQueue` at the same time. We cannot use `mutex` since we need to pause and resume goroutines and we cannot pause a goroutine in the middle of a critical section. Another way we could think of is giving each thread its local run queue. In this case the mutex is not needed since the `localRunQueue` is only accessed by a single thread. The thread may fetch from the global run queue when its own local run queue is empty. Also when a thread's local run queue is empty, it can stead work from other local run queues. The problem happens when a goroutine performs a syscall that takes a long time to return and can cause long waiting for threads to get the system call finished. Golang solves this problem by creating a new thread just before a system call and after that the current threat sleeps during the system call (waits for it to finis and does not use OS resources). By this other problems like checking a lot of local run queues when having lots of threads can happen. Using `Processor` is a solution to some of these problems. each thread gets a `processor` that contains variables for code execution. The local run queue is also moved to the processor. The processor helps when a thread gets blocked on a system call; In this case the thread can release the processor and leave it to another thread.
+### Scheduling
+
+The below code helps us to explain how golang implements fairness in threads. It uses an M:N mapping. This means M goroutines need to be mapped to N threads. So, users can create however many goroutines they want, but it schedules their goroutines on a thread for a certain period of time.
+
+Golang has a global FIFO named `globalRunQueue`; Each thread picks a goroutine from this queue to execute it. But this is not enough since more than one thread can take a goroutine from `globalRunQueue` at the same time. We cannot use `mutex` since we need to pause and resume goroutines and we cannot pause a goroutine in the middle of a critical section. Another way we could think of is giving each thread its local run queue. In this case the mutex is not needed since the `localRunQueue` is only accessed by a single thread. The thread may fetch from the global run queue when its own local run queue is empty. Also when a thread's local run queue is empty, it can stead work from other local run queues. The problem happens when a goroutine performs a syscall that takes a long time to return and can cause long waiting for threads to get the system call finished. Golang solves this problem by creating a new thread just before a system call and after that the current threat sleeps during the system call (waits for it to finis and does not use OS resources). By this other problems like checking a lot of local run queues when having lots of threads can happen. Using `Processor` is a solution to some of these problems. each thread gets a `processor` that contains variables for code execution. The local run queue is also moved to the processor. The processor helps when a thread gets blocked on a system call; In this case the thread can release the processor and leave it to another thread.
 
 ### Fairness
+
 - **Preemptoin**  
-A mechanism that pauses the goroutine if it takes longer than a certain period of time and adds it to the tail of the run queue is implemented
+  A mechanism that pauses the goroutine if it takes longer than a certain period of time and adds it to the tail of the run queue is implemented
 - **Global Run Queue Starvation**  
-The global run queue is polled occasionally to prevent starvation of goroutines in the global run queue. The global run queue is polled every 61st iteration of the scheduler loop. This ensures that goroutines in the global run queue are not starved and get a chance to run. 
+  The global run queue is polled occasionally to prevent starvation of goroutines in the global run queue. The global run queue is polled every 61st iteration of the scheduler loop. This ensures that goroutines in the global run queue are not starved and get a chance to run.
 
 ```go
 void runThread() {
@@ -582,7 +596,7 @@ void runThread() {
 
     // Check if there is an empty goroutine
     bool isEmpty = this.processor.localRunQueue.empty();
-    
+
     // If not empty
     if (!isEmpty) {
       goroutine g = this.processor.localRunQueue.getNextGoroutine();
@@ -596,7 +610,7 @@ void runThread() {
       for (int i = 0; i < localRunQueueCount; i += 1) {
         // Check if there is an empty goroutine in this local run queue
         bool isEmpty = localRunQueues[i].empty();
-        
+
         // If not, steal the next goroutine, and run it
         goroutine g = localRunQueues[i].getNextGoroutine();
         g();
@@ -606,8 +620,10 @@ void runThread() {
 }
 ```
 
-## Caching 
+## Caching
+
 Caching is implemented in sync.Map in golang. The data type is as the following:
+
 ```go
 type Map struct {
    mu     Mutex
@@ -621,13 +637,14 @@ type readOnly struct {
    amended bool
 }
 ```
-`mu` is a mutex used to protect access to read and dirty.   
+
+`mu` is a mutex used to protect access to read and dirty.  
 `read` is a read-only data structure supporting concurrent reads using atomic operations. It stores a readOnly structure that contains a map of entries.  
 `dirty` is a map of entries for reading and writing data, requiring locking to ensure data security.  
 `misses` is the number of cache misses.
 `amended` is a boolean which indicates whether the read and dirty data are consistent.
 
-Also the Entry structure is as follows and contains a pointer `p` that points to the value stored for the key. 
+Also the Entry structure is as follows and contains a pointer `p` that points to the value stored for the key.
 
 ```go
 type entry struct {
@@ -636,11 +653,46 @@ type entry struct {
 ```
 
 ### Reading Process
+
 Reading from sync.Map happens as the following:  
 At first it checks if the item exists in `read`. If it exists, it reads the data from it, otherwise it checks the `read.readOnly`. if the `amended` is `true` (indicating inconsistency), this data type search the dirty for the required item. Actually `read` acts as a cache
 
 ### Writing Process
+
 Same as the reading process, sync.Map checks for the existence of the item in `read` firstly. If the element does not exist in `read`, we need to proceed to the `dirty` process; Before the updating or storing the value, a mutex lock is acquired to prevent inconsistency in `dirty` process.
 
 ### Deletion Process
+
 Same as the reading and writing processes, sync.Maps checks `read` at first and make the deletion efficiently. If it does not exist in `read` and the `amended` is `true` a mutex lock is acquired. It then checks the `read` again; If the item still does not exist in `read`, the deletion is done in `dirty`.
+
+## Contributors
+
+- [Nesa Abbasi](https://github.com/Nesabbasi)
+  - Implementing the server & client side of the project
+  - Participating in writing code documentation
+- [Ava Mirmohammadmahdi](https://github.com/avamirm)
+  - Modify the server & client side of the project
+  - Participating in writing code documentation
+- [Amir Ali Vahidi](https://github.com/Mohta3b)
+  - Handling the project structure
+  - Implementing the server & client side of the project
+
+## Results
+
+### Help
+
+![help](assets/Help.png "help")
+
+### Create Event
+
+![createevents](assets/CreateEvents.png "csreateevents")
+![createeventserror1](assets/CreateEventsError1.png "createeventserror1")
+
+### Get Events
+
+![getevents](assets/GetEvents.png "getevents")
+
+### Book Event
+
+![bookevents](assets/BookEvents.png "bookevent")
+![bookeventserror1](assets/BookEventsError1.png "bookeventerror1")

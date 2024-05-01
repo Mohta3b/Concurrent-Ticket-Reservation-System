@@ -69,7 +69,6 @@ func PrintCreateEvent(body []byte) {
 }
 
 func ConnectToServer(Client *Client) error {
-	// call homePageHandler and if it was successful, call GetInput
 	statusCode := Client.GetHomePageHandler()
 	if statusCode != http.StatusOK {
 		log.Println("Error connecting to server. Exiting...")

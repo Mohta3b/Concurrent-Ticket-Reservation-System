@@ -19,7 +19,6 @@ func loadData(ts *TicketService.TicketService) {
 	log.Println("Data loaded.")
 }
 
-
 func Run(port string) {
 
 	createServerLogFile()

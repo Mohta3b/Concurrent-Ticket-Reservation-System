@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "ticket_reservation/src/client"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -36,7 +35,6 @@ func NewClient(homeURL, eventURL, reserveURL string) *Client {
 	}
 }
 
-// return status code
 func (c *Client) GetHomePageHandler() int {
 	resp, err := c.httpClient.Get(c.homeURL)
 	if err != nil {
@@ -50,14 +48,11 @@ func (c *Client) GetHomePageHandler() int {
 		return resp.StatusCode
 	}
 
-	// print response body. it is []byte format. convert to string
 	body, err := ioutil.ReadAll(resp.Body)
 	fmt.Println(string(body))
 
 	return resp.StatusCode
 }
-
-// type Response []Event // response
 
 func (c *Client) GetEventsHandler(args []string) {
 	if len(args) != 0 {

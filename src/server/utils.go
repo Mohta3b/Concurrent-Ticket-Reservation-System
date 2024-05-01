@@ -22,11 +22,9 @@ func GetHomePageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetListEventsHandler(w http.ResponseWriter, r *http.Request, ts *TicketService.TicketService) {
-	// define response body
 	log.Println("USER: GET /events")
 	events := ts.ListEvents()
 
-	// save events in json response w.Write it
 	response, err := json.Marshal(events)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error encoding response: %v", err), http.StatusInternalServerError)
@@ -34,17 +32,12 @@ func GetListEventsHandler(w http.ResponseWriter, r *http.Request, ts *TicketServ
 		return
 	}
 
-	// write response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
-
-	// print response body
-	// log.Println("List of events:", string(response))
 }
 
 func BookTicketsHandler(w http.ResponseWriter, r *http.Request, ts *TicketService.TicketService) {
-
 	parsedURL, err := url.Parse(r.URL.String())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error parsing URL: %v", err), http.StatusBadRequest)
@@ -164,7 +157,6 @@ func CreateEventHandler(w http.ResponseWriter, r *http.Request, ts *TicketServic
 }
 
 func saveNewEvent(event *Event.Event) {
-	// open events.json file
 	file, err := os.OpenFile("./data/events.json", os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		log.Println("Error opening events file: %v", err)
@@ -172,7 +164,6 @@ func saveNewEvent(event *Event.Event) {
 	}
 	defer file.Close()
 
-	// decode json from file
 	var events []*Event.Event
 	err = json.NewDecoder(file).Decode(&events)
 	if err != nil {
@@ -180,10 +171,8 @@ func saveNewEvent(event *Event.Event) {
 		return
 	}
 
-	// append new event to events slice
 	events = append(events, event)
 
-	// write events slice to file
 	file.Seek(0, 0)
 	err = file.Truncate(0)
 	if err != nil {
@@ -198,7 +187,6 @@ func saveNewEvent(event *Event.Event) {
 }
 
 func createServerLogFile() {
-	// create server_log.txt file in ./data directory
 	logFile, err := os.Create("./data/server_log.txt")
 	if err != nil {
 		log.Fatal(err)

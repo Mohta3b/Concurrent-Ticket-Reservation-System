@@ -4,8 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-
-	// "log"
 	"os"
 	"sync"
 	"ticket_reservation/src/Event"
@@ -89,7 +87,6 @@ func (ts *TicketService) CreateEvent(name string, date time.Time, totalTickets i
 		AvailableTickets: totalTickets,
 	}
 
-	// CHECKME: IS it correct?
 	ts.events.Store(event.ID, event)
 
 	return event, nil

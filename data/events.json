@@ -1,1 +1,4 @@
+<<<<<<< HEAD
 [{"id":"1","name":"Event 1","date":"2021-03-01","totalTickets":10,"availableTickets":5},{"id":"2","name":"Event 2","date":"2021-03-02","totalTickets":200,"availableTickets":200},{"id":"3","name":"Event 3","date":"2021-03-03","totalTickets":3,"availableTickets":0},{"id":"f71b4120-ffa2-4cc0-b9a4-0090d6317ca7","name":"mm","date":"2025-10-01","totalTickets":20,"availableTickets":20}]
+=======
+>>>>>>> 8a77bb2 (Add assets)
